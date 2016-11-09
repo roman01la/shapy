@@ -3,10 +3,11 @@
             [shapy.utils :refer [event->value]]))
 
 (def container-styles
-  {:width 200
+  {:minWidth 200
    :background "#f8f8f8"
    :borderLeft "1px solid #bfbfbf"
    :display "flex"
+   :flex 1
    :flexDirection "column"})
 
 (def attr-container-styles

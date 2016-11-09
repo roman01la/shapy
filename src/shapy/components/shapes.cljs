@@ -52,10 +52,14 @@
 (rum/defcs InteractiveShape <
   rum/static
   (rum/local {:hovered? false} ::state)
-  [{state ::state} render-shape props]
+  [{state ::state}
+   render-shape
+   props
+   on-select]
   (let [{:keys [hovered?]} @state]
     [:g {:on-mouse-over #(swap! state assoc :hovered? true)
-         :on-mouse-out #(swap! state assoc :hovered? false)}
+         :on-mouse-out #(swap! state assoc :hovered? false)
+         :on-click (when on-select #(on-select))}
      (render-shape props)
      (when hovered?
        (render-shape (-> props

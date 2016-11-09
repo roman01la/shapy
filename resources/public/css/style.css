@@ -3,6 +3,6 @@ body {
   font: normal 16px sans-serif;
 }
 
-.canvas:hover {
+.canvas__tool:hover {
   cursor: crosshair;
 }

@@ -16,37 +16,53 @@
       (swap! history conj nst-)
       (reset! history (conj (subvec h 0 (inc idx)) nst-)))))
 
-(def undo-redo-mixin
+(defn keyboard-mixin [& handles]
   {:did-mount
    (fn [{st ::state :as state}]
-     (.addEventListener js/document "keydown"
-                        (fn [e]
-                          (cond
-                            ;; undo
-                            (and (= (.. e -keyCode) 90)
-                                 (true? (.. e -ctrlKey)))
-                            (let [h @history
-                                  s @st
-                                  idx (dec (.indexOf h (dissoc s :drag-end)))]
-                              (when (>= idx 0)
-                                (reset! st (assoc (nth h idx) :drag-end (:drag-end s)))))
-                            ;; redo
-                            (and (= (.. e -keyCode) 89)
-                                 (true? (.. e -ctrlKey)))
-                            (let [h @history
-                                  s @st
-                                  idx (inc (.indexOf h (dissoc s :drag-end)))]
-                              (when (< idx (count h))
-                                (reset! st (assoc (nth h idx) :drag-end (:drag-end s))))))))
-     (update-history history @st @st)
+     (.addEventListener
+      js/document "keydown"
+      (fn [e]
+        (let [e-keys {:key-code (.. e -keyCode)
+                      :ctrl-key (.. e -ctrlKey)}]
+          (doseq [handler handles]
+            (handler st e-keys)))))
+
      state)})
+
+(defn handle-undo-redo
+  [st
+   {:keys [key-code
+           ctrl-key]}]
+  (cond
+    ;; undo
+    (and (= key-code 90)
+         (true? ctrl-key))
+    (let [h @history
+          s @st
+          idx (dec (.indexOf h (dissoc s :drag-end)))]
+      (when (>= idx 0)
+        (reset! st (assoc (nth h idx) :drag-end (:drag-end s)))))
+    ;; redo
+    (and (= key-code 89)
+         (true? ctrl-key))
+    (let [h @history
+          s @st
+          idx (inc (.indexOf h (dissoc s :drag-end)))]
+      (when (< idx (count h))
+        (reset! st (assoc (nth h idx) :drag-end (:drag-end s)))))))
+
+(defn handle-esc [st {:keys [key-code]}]
+  (when (and (= key-code 27) (:tool @st))
+    (swap! st assoc :tool nil)))
 
 (def container-styles
   {:display "flex"
    :flexDirection "column"})
 
-(def inner-container-styles
-  {:display "flex"})
+(def canvas-container-styles
+  {:background "#fff"
+   :display "flex"
+   :overflow "hidden"})
 
 (defn render-line [props]
   (Line props))
@@ -99,11 +115,11 @@
    :oval (render-oval props)
    nil))
 
-(defn render-shapes [props idx]
+(defn render-shapes [on-select props idx]
   (case (:type props)
-    :line (rum/with-key (InteractiveShape render-line props) idx)
-    :rect (rum/with-key (InteractiveShape render-rect props) idx)
-    :oval (rum/with-key (InteractiveShape render-oval props) idx)))
+    :line (rum/with-key (InteractiveShape render-line props on-select) idx)
+    :rect (rum/with-key (InteractiveShape render-rect props on-select) idx)
+    :oval (rum/with-key (InteractiveShape render-oval props on-select) idx)))
 
 (defn update-state
   [shape
@@ -135,10 +151,17 @@
         nst))))
 
 (rum/defcs App <
-  undo-redo-mixin
+  (keyboard-mixin
+   handle-undo-redo
+   handle-esc)
+  {:did-mount
+   (fn [{st ::state :as state}]
+     (update-history history @st @st)
+     state)}
   (rum/local
    {:drag-end nil
     :shapes []
+    :selected nil
     :tool nil
     :attrs {:start nil
             :end nil
@@ -158,7 +181,8 @@
     [:div {:style container-styles}
      (Toolbar {:on-select #(swap! state assoc :tool %)
                :selected tool})
-     [:div {:style inner-container-styles}
+     [:div {:style canvas-container-styles
+            :class (when tool "canvas__tool")}
        (SnappyGrid
         {:on-mouse-move #(swap! state assoc :drag-end %)
          :on-click #(swap! state (fn [st]
@@ -173,7 +197,10 @@
 
         [:g
          (map-indexed
-          #(render-shapes %2 %1)
+          (fn [idx props]
+            (render-shapes
+             #(swap! state assoc :selected (nth shapes idx))
+             props idx))
           shapes)
          (when (and start (or end drag-end))
            (render-active-shape
