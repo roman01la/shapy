@@ -4,13 +4,13 @@
 (rum/defc Line
   [{:keys [start
            end
-           color
+           border-color
            border-width]}]
   [:line {:x1 (:x start)
           :y1 (:y start)
           :x2 (:x end)
           :y2 (:y end)
-          :stroke color
+          :stroke border-color
           :stroke-width border-width}])
 
 (rum/defc Rect
@@ -20,7 +20,7 @@
            ry
            width
            height
-           color
+           border-color
            fill
            border-width]}]
   [:rect {:x x
@@ -29,7 +29,7 @@
           :ry ry
           :width width
           :height height
-          :stroke color
+          :stroke border-color
           :stroke-width border-width
           :fill fill}])
 
@@ -38,13 +38,27 @@
            cy
            rx
            ry
-           color
+           border-color
            fill
            border-width]}]
   [:ellipse {:cx cx
              :cy cy
              :rx rx
              :ry ry
-             :stroke color
+             :stroke border-color
              :stroke-width border-width
              :fill fill}])
+
+(rum/defcs InteractiveShape <
+  rum/static
+  (rum/local {:hovered? false} ::state)
+  [{state ::state} render-shape props]
+  (let [{:keys [hovered?]} @state]
+    [:g {:on-mouse-over #(swap! state assoc :hovered? true)
+         :on-mouse-out #(swap! state assoc :hovered? false)}
+     (render-shape props)
+     (when hovered?
+       (render-shape (-> props
+                         (merge {:border-color "#4bc1fc"
+                                 :border-width 1.5
+                                 :fill "none"}))))]))

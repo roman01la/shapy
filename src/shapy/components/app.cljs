@@ -3,7 +3,7 @@
             [shapy.components.grid :refer [SnappyGrid]]
             [shapy.components.toolbar :refer [Toolbar]]
             [shapy.components.attrs-editor :refer [AttrsEditor]]
-            [shapy.components.shapes :refer [Line Rect Oval]]))
+            [shapy.components.shapes :refer [Line Rect Oval InteractiveShape]]))
 
 (def history (atom []))
 
@@ -68,7 +68,7 @@
            :ry radius
            :width (if inv-x? (- x1 x2) (- x2 x1))
            :height (if inv-y? (- y1 y2) (- y2 y1))
-           :color border-color
+           :border-color border-color
            :border-width border-width
            :fill fill})))
 
@@ -88,10 +88,9 @@
            :cy ((if inv-y? - +) y1 (/ ry 2))
            :rx (/ rx 2)
            :ry (/ ry 2)
-           :color border-color
+           :border-color border-color
            :border-width border-width
-           :fill fill
-           :on-mouse-over #(console.log 123)})))
+           :fill fill})))
 
 (defn render-active-shape [props tool]
   (case tool
@@ -102,9 +101,9 @@
 
 (defn render-shapes [props idx]
   (case (:type props)
-    :line (rum/with-key (render-line props) idx)
-    :rect (rum/with-key (render-rect props) idx)
-    :oval (rum/with-key (render-oval props) idx)))
+    :line (rum/with-key (InteractiveShape render-line props) idx)
+    :rect (rum/with-key (InteractiveShape render-rect props) idx)
+    :oval (rum/with-key (InteractiveShape render-oval props) idx)))
 
 (defn update-state
   [shape
@@ -144,7 +143,7 @@
     :attrs {:start nil
             :end nil
             :radius 0
-            :fill "#31E3F5"
+            :fill "#f54f4b"
             :border-color "#16909C"
             :border-width 2}}
    ::state)
