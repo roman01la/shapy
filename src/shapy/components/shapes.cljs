@@ -17,25 +17,27 @@
            y
            width
            height
-           color]}]
+           color
+           fill]}]
   [:rect {:x x
           :y y
           :width width
           :height height
           :stroke color
           :stroke-width 4
-          :fill "none"}])
+          :fill fill}])
 
 (rum/defc Oval
   [{:keys [cx
            cy
            rx
            ry
-           color]}]
+           color
+           fill]}]
   [:ellipse {:cx cx
              :cy cy
              :rx rx
              :ry ry
              :stroke color
              :stroke-width 4
-             :fill "none"}])
+             :fill fill}])

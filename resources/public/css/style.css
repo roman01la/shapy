@@ -1,6 +1,6 @@
 body {
   margin: 0;
-  font: normal 16px monospace;
+  font: normal 16px sans-serif;
 }
 
 .canvas:hover {

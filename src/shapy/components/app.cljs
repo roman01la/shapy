@@ -56,11 +56,12 @@
    {:start nil
     :end nil
     :drag-end nil
+    :fill "#000000"
     :shapes []
     :tool nil}
    ::state)
   [{state ::state}]
-  (let [{:keys [start end drag-end shapes tool]} @state]
+  (let [{:keys [start end drag-end fill shapes tool]} @state]
     [:div {:style container-styles}
      (Toolbar {:on-select #(swap! state assoc :tool %)
                    :selected tool})
@@ -79,7 +80,8 @@
                                        (let [nst (-> st
                                                      (update :shapes conj {:start start
                                                                            :end %
-                                                                           :type tool})
+                                                                           :type tool
+                                                                           :fill fill})
                                                      (assoc :start nil)
                                                      (assoc :end nil))]
                                          (update-history history st nst)
@@ -95,7 +97,7 @@
 
         [:g
          (map-indexed
-          (fn [idx {:keys [start end type]}]
+          (fn [idx {:keys [start end type fill]}]
             (case type
               :line
               (rum/with-key
@@ -113,7 +115,8 @@
                          :y (if inv-y? y2 y1)
                          :width (if inv-x? (- x1 x2) (- x2 x1))
                          :height (if inv-y? (- y1 y2) (- y2 y1))
-                         :color stroke-color})
+                         :color stroke-color
+                         :fill fill})
                   idx))
               :oval
               (let [{x1 :x y1 :y} start
@@ -127,7 +130,8 @@
                          :cy (+ y1 (/ ry 2))
                          :rx (/ rx 2)
                          :ry (/ ry 2)
-                         :color stroke-color})
+                         :color stroke-color
+                         :fill fill})
                   idx))))
           shapes)
          (when (and start (or end drag-end))
@@ -145,7 +149,8 @@
                      :y (if inv-y? y2 y1)
                      :width (if inv-x? (- x1 x2) (- x2 x1))
                      :height (if inv-y? (- y1 y2) (- y2 y1))
-                     :color stroke-color}))
+                     :color stroke-color
+                     :fill fill}))
             :oval
             (let [{x1 :x y1 :y} start
                   {x2 :x y2 :y} (or end drag-end)
@@ -157,6 +162,9 @@
                      :cy (+ y1 (/ ry 2))
                      :rx (/ rx 2)
                      :ry (/ ry 2)
-                     :color stroke-color}))
+                     :color stroke-color
+                     :fill fill}))
             nil))])
-      (AttrsEditor)]]))
+      (AttrsEditor
+       #(swap! state assoc %1 %2)
+       {:fill fill})]]))
