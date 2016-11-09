@@ -25,3 +25,17 @@
           :stroke color
           :stroke-width 4
           :fill "none"}])
+
+(rum/defc Oval
+  [{:keys [cx
+           cy
+           rx
+           ry
+           color]}]
+  [:ellipse {:cx cx
+             :cy cy
+             :rx rx
+             :ry ry
+             :stroke color
+             :stroke-width 4
+             :fill "none"}])

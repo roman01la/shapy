@@ -2,7 +2,7 @@
   (:require [rum.core :as rum]
             [shapy.components.grid :refer [SnappyGrid]]
             [shapy.components.attrs-editor :refer [AttrsEditor]]
-            [shapy.components.shapes :refer [Line Rect]]))
+            [shapy.components.shapes :refer [Line Rect Oval]]))
 
 (def history (atom []))
 
@@ -109,6 +109,20 @@
                        :width (if inv-x? (- x1 x2) (- x2 x1))
                        :height (if inv-y? (- y1 y2) (- y2 y1))
                        :color stroke-color})
+                idx))
+            :oval
+            (let [{x1 :x y1 :y} start
+                  {x2 :x y2 :y} end
+                  inv-x? (> x1 x2)
+                  inv-y? (> y1 y2)
+                  rx (if inv-x? (- x1 x2) (- x2 x1))
+                  ry (if inv-y? (- y1 y2) (- y2 y1))]
+              (rum/with-key
+                (Oval {:cx (+ x1 (/ rx 2))
+                       :cy (+ y1 (/ ry 2))
+                       :rx (/ rx 2)
+                       :ry (/ ry 2)
+                       :color stroke-color})
                 idx))))
         shapes)
        (when (and start (or end drag-end))
@@ -126,5 +140,17 @@
                    :y (if inv-y? y2 y1)
                    :width (if inv-x? (- x1 x2) (- x2 x1))
                    :height (if inv-y? (- y1 y2) (- y2 y1))
+                   :color stroke-color}))
+          :oval
+          (let [{x1 :x y1 :y} start
+                {x2 :x y2 :y} (or end drag-end)
+                inv-x? (> x1 x2)
+                inv-y? (> y1 y2)
+                rx (if inv-x? (- x1 x2) (- x2 x1))
+                ry (if inv-y? (- y1 y2) (- y2 y1))]
+            (Oval {:cx (+ x1 (/ rx 2))
+                   :cy (+ y1 (/ ry 2))
+                   :rx (/ rx 2)
+                   :ry (/ ry 2)
                    :color stroke-color}))
           nil))])]))
