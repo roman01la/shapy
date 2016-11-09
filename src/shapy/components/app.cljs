@@ -1,6 +1,7 @@
 (ns shapy.components.app
   (:require [rum.core :as rum]
             [shapy.components.grid :refer [SnappyGrid]]
+            [shapy.components.toolbar :refer [Toolbar]]
             [shapy.components.attrs-editor :refer [AttrsEditor]]
             [shapy.components.shapes :refer [Line Rect Oval]]))
 
@@ -44,6 +45,9 @@
   {:display "flex"
    :flex-direction "column"})
 
+(def inner-container-styles
+  {:display "flex"})
+
 (def stroke-color "#158eec")
 
 (rum/defcs App <
@@ -58,99 +62,101 @@
   [{state ::state}]
   (let [{:keys [start end drag-end shapes tool]} @state]
     [:div {:style container-styles}
-     (AttrsEditor {:on-select #(swap! state assoc :tool %)
+     (Toolbar {:on-select #(swap! state assoc :tool %)
                    :selected tool})
-     (SnappyGrid
-      {:on-mouse-move #(swap! state assoc :drag-end %)
-       :on-click #(swap! state (fn [st]
-                                 (if tool
-                                   (cond
-                                     (and (nil? start) (nil? end))
-                                     (let [nst (assoc st :start %)]
-                                       (update-history history st nst)
-                                       nst)
+     [:div {:style inner-container-styles}
+       (SnappyGrid
+        {:on-mouse-move #(swap! state assoc :drag-end %)
+         :on-click #(swap! state (fn [st]
+                                   (if tool
+                                     (cond
+                                       (and (nil? start) (nil? end))
+                                       (let [nst (assoc st :start %)]
+                                         (update-history history st nst)
+                                         nst)
 
-                                     (and start (nil? end))
-                                     (let [nst (-> st
-                                                   (update :shapes conj {:start start
-                                                                         :end %
-                                                                         :type tool})
-                                                   (assoc :start nil)
-                                                   (assoc :end nil))]
-                                       (update-history history st nst)
-                                       nst)
+                                       (and start (nil? end))
+                                       (let [nst (-> st
+                                                     (update :shapes conj {:start start
+                                                                           :end %
+                                                                           :type tool})
+                                                     (assoc :start nil)
+                                                     (assoc :end nil))]
+                                         (update-history history st nst)
+                                         nst)
 
-                                     (and start end)
-                                     (let [nst (-> st
-                                                   (assoc :start nil)
-                                                   (assoc :end nil))]
-                                       (update-history history st nst)
-                                       nst))
-                                   st)))}
+                                       (and start end)
+                                       (let [nst (-> st
+                                                     (assoc :start nil)
+                                                     (assoc :end nil))]
+                                         (update-history history st nst)
+                                         nst))
+                                     st)))}
 
-      [:g
-       (map-indexed
-        (fn [idx {:keys [start end type]}]
-          (case type
+        [:g
+         (map-indexed
+          (fn [idx {:keys [start end type]}]
+            (case type
+              :line
+              (rum/with-key
+                (Line {:start start
+                       :end end
+                       :color stroke-color})
+                idx)
+              :rect
+              (let [{x1 :x y1 :y} start
+                    {x2 :x y2 :y} end
+                    inv-x? (> x1 x2)
+                    inv-y? (> y1 y2)]
+                (rum/with-key
+                  (Rect {:x (if inv-x? x2 x1)
+                         :y (if inv-y? y2 y1)
+                         :width (if inv-x? (- x1 x2) (- x2 x1))
+                         :height (if inv-y? (- y1 y2) (- y2 y1))
+                         :color stroke-color})
+                  idx))
+              :oval
+              (let [{x1 :x y1 :y} start
+                    {x2 :x y2 :y} end
+                    inv-x? (> x1 x2)
+                    inv-y? (> y1 y2)
+                    rx (if inv-x? (- x1 x2) (- x2 x1))
+                    ry (if inv-y? (- y1 y2) (- y2 y1))]
+                (rum/with-key
+                  (Oval {:cx (+ x1 (/ rx 2))
+                         :cy (+ y1 (/ ry 2))
+                         :rx (/ rx 2)
+                         :ry (/ ry 2)
+                         :color stroke-color})
+                  idx))))
+          shapes)
+         (when (and start (or end drag-end))
+           (case tool
             :line
-            (rum/with-key
-              (Line {:start start
-                     :end end
-                     :color stroke-color})
-              idx)
+            (Line {:start start
+                   :end (or end drag-end)
+                   :color stroke-color})
             :rect
             (let [{x1 :x y1 :y} start
-                  {x2 :x y2 :y} end
+                  {x2 :x y2 :y} (or end drag-end)
                   inv-x? (> x1 x2)
                   inv-y? (> y1 y2)]
-              (rum/with-key
-                (Rect {:x (if inv-x? x2 x1)
-                       :y (if inv-y? y2 y1)
-                       :width (if inv-x? (- x1 x2) (- x2 x1))
-                       :height (if inv-y? (- y1 y2) (- y2 y1))
-                       :color stroke-color})
-                idx))
+              (Rect {:x (if inv-x? x2 x1)
+                     :y (if inv-y? y2 y1)
+                     :width (if inv-x? (- x1 x2) (- x2 x1))
+                     :height (if inv-y? (- y1 y2) (- y2 y1))
+                     :color stroke-color}))
             :oval
             (let [{x1 :x y1 :y} start
-                  {x2 :x y2 :y} end
+                  {x2 :x y2 :y} (or end drag-end)
                   inv-x? (> x1 x2)
                   inv-y? (> y1 y2)
                   rx (if inv-x? (- x1 x2) (- x2 x1))
                   ry (if inv-y? (- y1 y2) (- y2 y1))]
-              (rum/with-key
-                (Oval {:cx (+ x1 (/ rx 2))
-                       :cy (+ y1 (/ ry 2))
-                       :rx (/ rx 2)
-                       :ry (/ ry 2)
-                       :color stroke-color})
-                idx))))
-        shapes)
-       (when (and start (or end drag-end))
-         (case tool
-          :line
-          (Line {:start start
-                 :end (or end drag-end)
-                 :color stroke-color})
-          :rect
-          (let [{x1 :x y1 :y} start
-                {x2 :x y2 :y} (or end drag-end)
-                inv-x? (> x1 x2)
-                inv-y? (> y1 y2)]
-            (Rect {:x (if inv-x? x2 x1)
-                   :y (if inv-y? y2 y1)
-                   :width (if inv-x? (- x1 x2) (- x2 x1))
-                   :height (if inv-y? (- y1 y2) (- y2 y1))
-                   :color stroke-color}))
-          :oval
-          (let [{x1 :x y1 :y} start
-                {x2 :x y2 :y} (or end drag-end)
-                inv-x? (> x1 x2)
-                inv-y? (> y1 y2)
-                rx (if inv-x? (- x1 x2) (- x2 x1))
-                ry (if inv-y? (- y1 y2) (- y2 y1))]
-            (Oval {:cx (+ x1 (/ rx 2))
-                   :cy (+ y1 (/ ry 2))
-                   :rx (/ rx 2)
-                   :ry (/ ry 2)
-                   :color stroke-color}))
-          nil))])]))
+              (Oval {:cx (+ x1 (/ rx 2))
+                     :cy (+ y1 (/ ry 2))
+                     :rx (/ rx 2)
+                     :ry (/ ry 2)
+                     :color stroke-color}))
+            nil))])
+      (AttrsEditor)]]))
