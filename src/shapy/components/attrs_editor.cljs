@@ -22,8 +22,12 @@
   rum/static
   [{:keys [on-select selected]}]
   [:div {:style editor-styles}
-   [:img {:src "/logo.svg"
-          :style {:margin "0 32px 0 0"}}]
+   [:img {:src "/app_icon.png"
+          :title "Shapy!"
+          :width 24
+          :height 24
+          :style {:margin "0 32px 0 0"
+                  :padding 2}}]
    [:div {:style section-styles}
     [:div {:style icons-panel-styles}
      (LineIcon {:on-click #(on-select :line)
