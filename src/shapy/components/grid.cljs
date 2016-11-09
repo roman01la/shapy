@@ -70,7 +70,7 @@
          :patternUnits "userSpaceOnUse"
          :fill "none"
          :stroke "#eee"
-         :stroke-width 1}
+         :strokeWidth 1}
         [:path
          {:d (str "M " w " 0 L 0 0 0 " h)}]]
        [:pattern
@@ -81,7 +81,7 @@
          :patternTransform "translate(0, 0)"
          :fill "none"
          :stroke "#e4e4e4"
-         :stroke-width 1}
+         :strokeWidth 1}
         [:rect
          {:width 100
           :height 100

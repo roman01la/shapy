@@ -5,7 +5,7 @@
   {:width 28
    :height 28
    :padding 1
-   :box-sizing "border-box"
+   :boxSizing "border-box"
    :background (if active? "#eee" "transparent")
    :border (if active? "1px solid #ccc" "1px solid transparent")})
 

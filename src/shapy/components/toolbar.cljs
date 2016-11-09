@@ -4,15 +4,15 @@
 
 (def editor-styles
   {:background "#fff"
-   :border-bottom "1px solid #bfbfbf"
+   :borderBottom "1px solid #bfbfbf"
    :padding "8px 16px"
    :display "flex"
-   :justify-content "flex-start"
+   :justifyContent "flex-start"
    :zIndex 1})
 
 (def section-styles
   {:display "flex"
-   :flex-direction "column"
+   :flexDirection "column"
    :margin "0 20px 0 0"})
 
 (def icons-panel-styles

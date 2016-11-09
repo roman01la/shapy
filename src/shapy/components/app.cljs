@@ -43,7 +43,7 @@
 
 (def container-styles
   {:display "flex"
-   :flex-direction "column"})
+   :flexDirection "column"})
 
 (def inner-container-styles
   {:display "flex"})

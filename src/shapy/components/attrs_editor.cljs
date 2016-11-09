@@ -4,7 +4,9 @@
 (def container-styles
   {:width 240
    :background "#eee"
-   :border-left "1px solid #bfbfbf"})
+   :borderLeft "1px solid #bfbfbf"
+   :display "flex"
+   :flexDirection "column"})
 
 (rum/defc AttrsEditor <
   rum/static
