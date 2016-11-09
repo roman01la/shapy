@@ -54,6 +54,7 @@
    {:start nil
     :end nil
     :drag-end nil
+    :radius 0
     :fill "#000000"
     :border-color "#158eec"
     :border-width 4
@@ -64,6 +65,7 @@
   (let [{:keys [start
                 end
                 drag-end
+                radius
                 fill
                 border-color
                 border-width
@@ -89,6 +91,7 @@
                                                      (update :shapes conj {:start start
                                                                            :end %
                                                                            :type tool
+                                                                           :radius radius
                                                                            :fill fill
                                                                            :color border-color
                                                                            :border-width border-width})
@@ -110,6 +113,7 @@
           (fn [idx {:keys [start
                            end
                            type
+                           radius
                            fill
                            color
                            border-width]}]
@@ -129,6 +133,8 @@
                 (rum/with-key
                   (Rect {:x (if inv-x? x2 x1)
                          :y (if inv-y? y2 y1)
+                         :rx radius
+                         :ry radius
                          :width (if inv-x? (- x1 x2) (- x2 x1))
                          :height (if inv-y? (- y1 y2) (- y2 y1))
                          :color color
@@ -166,6 +172,8 @@
                   inv-y? (> y1 y2)]
               (Rect {:x (if inv-x? x2 x1)
                      :y (if inv-y? y2 y1)
+                     :rx radius
+                     :ry radius
                      :width (if inv-x? (- x1 x2) (- x2 x1))
                      :height (if inv-y? (- y1 y2) (- y2 y1))
                      :color border-color
@@ -188,6 +196,7 @@
             nil))])
       (AttrsEditor
        #(swap! state assoc %1 %2)
-       {:fill fill
+       {:radius radius
+        :fill fill
         :border-color border-color
         :border-width border-width})]]))

@@ -16,6 +16,8 @@
 (rum/defc Rect
   [{:keys [x
            y
+           rx
+           ry
            width
            height
            color
@@ -23,6 +25,8 @@
            border-width]}]
   [:rect {:x x
           :y y
+          :rx rx
+          :ry ry
           :width width
           :height height
           :stroke color

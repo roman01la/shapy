@@ -42,13 +42,18 @@
            :on-change #(-> % event->value on-change)}])
 
 (rum/defc InputNumber
-  [{:keys [value on-change]}]
+  [{:keys [value
+           on-change
+           min
+           max]}]
   [:input {:type "number"
            :style {:margin 0
                    :padding 0
                    :width 32
                    :height 16}
            :value value
+           :min min
+           :max max
            :on-change #(-> % event->value js/parseFloat on-change)}])
 
 (rum/defc RadiusAttr
@@ -57,7 +62,8 @@
   (attr
    {:name "Radius"}
    (InputNumber {:on-change #(on-change :radius %)
-                 :value value})))
+                 :value value
+                 :min 0})))
 
 (rum/defc FillAttr
   < rum/static
@@ -75,7 +81,8 @@
    (InputColor {:on-change #(on-change :border-color %)
                 :value border-color})
    (InputNumber {:on-change #(on-change :border-width %)
-                 :value border-width})))
+                 :value border-width
+                 :min 0})))
 
 (rum/defc AttrsEditor <
   rum/static
