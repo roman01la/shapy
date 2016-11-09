@@ -51,6 +51,14 @@
            :value value
            :on-change #(-> % event->value js/parseFloat on-change)}])
 
+(rum/defc RadiusAttr
+  < rum/static
+  [on-change value]
+  (attr
+   {:name "Radius"}
+   (InputNumber {:on-change #(on-change :radius %)
+                 :value value})))
+
 (rum/defc FillAttr
   < rum/static
   [on-change value]
@@ -72,9 +80,11 @@
 (rum/defc AttrsEditor <
   rum/static
   [on-change
-   {:keys [fill
+   {:keys [radius
+           fill
            border-color
            border-width]}]
   [:div {:style container-styles}
+   (RadiusAttr on-change radius)
    (FillAttr on-change fill)
    (BorderAttr on-change border-color border-width)])
