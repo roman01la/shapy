@@ -149,8 +149,8 @@
                     rx (if inv-x? (- x1 x2) (- x2 x1))
                     ry (if inv-y? (- y1 y2) (- y2 y1))]
                 (rum/with-key
-                  (Oval {:cx (+ x1 (/ rx 2))
-                         :cy (+ y1 (/ ry 2))
+                  (Oval {:cx ((if inv-x? - +) x1 (/ rx 2))
+                         :cy ((if inv-y? - +) y1 (/ ry 2))
                          :rx (/ rx 2)
                          :ry (/ ry 2)
                          :color color
@@ -186,8 +186,8 @@
                   inv-y? (> y1 y2)
                   rx (if inv-x? (- x1 x2) (- x2 x1))
                   ry (if inv-y? (- y1 y2) (- y2 y1))]
-              (Oval {:cx (+ x1 (/ rx 2))
-                     :cy (+ y1 (/ ry 2))
+              (Oval {:cx ((if inv-x? - +) x1 (/ rx 2))
+                     :cy ((if inv-y? - +) y1 (/ ry 2))
                      :rx (/ rx 2)
                      :ry (/ ry 2)
                      :color border-color
