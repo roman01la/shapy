@@ -48,155 +48,138 @@
 (def inner-container-styles
   {:display "flex"})
 
+(defn render-line [props]
+  (Line props))
+
+(defn render-rect
+  [{:keys [start
+           end
+           radius
+           border-color
+           border-width
+           fill]}]
+  (let [{x1 :x y1 :y} start
+        {x2 :x y2 :y} end
+        inv-x? (> x1 x2)
+        inv-y? (> y1 y2)]
+    (Rect {:x (if inv-x? x2 x1)
+           :y (if inv-y? y2 y1)
+           :rx radius
+           :ry radius
+           :width (if inv-x? (- x1 x2) (- x2 x1))
+           :height (if inv-y? (- y1 y2) (- y2 y1))
+           :color border-color
+           :border-width border-width
+           :fill fill})))
+
+(defn render-oval
+  [{:keys [start
+           end
+           border-color
+           border-width
+           fill]}]
+  (let [{x1 :x y1 :y} start
+        {x2 :x y2 :y} end
+        inv-x? (> x1 x2)
+        inv-y? (> y1 y2)
+        rx (if inv-x? (- x1 x2) (- x2 x1))
+        ry (if inv-y? (- y1 y2) (- y2 y1))]
+    (Oval {:cx ((if inv-x? - +) x1 (/ rx 2))
+           :cy ((if inv-y? - +) y1 (/ ry 2))
+           :rx (/ rx 2)
+           :ry (/ ry 2)
+           :color border-color
+           :border-width border-width
+           :fill fill
+           :on-mouse-over #(console.log 123)})))
+
+(defn render-active-shape [props tool]
+  (case tool
+   :line (render-line props)
+   :rect (render-rect props)
+   :oval (render-oval props)
+   nil))
+
+(defn render-shapes [props idx]
+  (case (:type props)
+    :line (rum/with-key (render-line props) idx)
+    :rect (rum/with-key (render-rect props) idx)
+    :oval (rum/with-key (render-oval props) idx)))
+
+(defn update-state
+  [shape
+   tool
+   pos
+   history
+   st]
+  (let [{:keys [start end]} (:attrs st)]
+    (cond
+      (and (nil? start) (nil? end))
+      (let [nst (assoc-in st [:attrs :start] pos)]
+        (update-history history st nst)
+        nst)
+
+      (and start (nil? end))
+      (let [nst (-> st
+                    (update :shapes conj (merge shape {:end pos
+                                                       :type tool}))
+                    (assoc-in [:attrs :start] nil)
+                    (assoc-in [:attrs :end] nil))]
+        (update-history history st nst)
+        nst)
+
+      (and start end)
+      (let [nst (-> st
+                    (assoc-in [:attrs :start] nil)
+                    (assoc-in [:attrs :end] nil))]
+        (update-history history st nst)
+        nst))))
+
 (rum/defcs App <
   undo-redo-mixin
   (rum/local
-   {:start nil
-    :end nil
-    :drag-end nil
-    :radius 0
-    :fill "#000000"
-    :border-color "#158eec"
-    :border-width 4
+   {:drag-end nil
     :shapes []
-    :tool nil}
+    :tool nil
+    :attrs {:start nil
+            :end nil
+            :radius 0
+            :fill "#31E3F5"
+            :border-color "#16909C"
+            :border-width 2}}
    ::state)
   [{state ::state}]
-  (let [{:keys [start
-                end
-                drag-end
-                radius
-                fill
-                border-color
-                border-width
+  (let [{:keys [drag-end
                 shapes
-                tool]}
-        @state]
+                tool
+                attrs]}
+        @state
+        {:keys [start end]} attrs]
+
     [:div {:style container-styles}
      (Toolbar {:on-select #(swap! state assoc :tool %)
-                   :selected tool})
+               :selected tool})
      [:div {:style inner-container-styles}
        (SnappyGrid
         {:on-mouse-move #(swap! state assoc :drag-end %)
          :on-click #(swap! state (fn [st]
                                    (if tool
-                                     (cond
-                                       (and (nil? start) (nil? end))
-                                       (let [nst (assoc st :start %)]
-                                         (update-history history st nst)
-                                         nst)
-
-                                       (and start (nil? end))
-                                       (let [nst (-> st
-                                                     (update :shapes conj {:start start
-                                                                           :end %
-                                                                           :type tool
-                                                                           :radius radius
-                                                                           :fill fill
-                                                                           :color border-color
-                                                                           :border-width border-width})
-                                                     (assoc :start nil)
-                                                     (assoc :end nil))]
-                                         (update-history history st nst)
-                                         nst)
-
-                                       (and start end)
-                                       (let [nst (-> st
-                                                     (assoc :start nil)
-                                                     (assoc :end nil))]
-                                         (update-history history st nst)
-                                         nst))
+                                     (update-state
+                                       attrs
+                                       tool
+                                       %
+                                       history
+                                       st)
                                      st)))}
 
         [:g
          (map-indexed
-          (fn [idx {:keys [start
-                           end
-                           type
-                           radius
-                           fill
-                           color
-                           border-width]}]
-            (case type
-              :line
-              (rum/with-key
-                (Line {:start start
-                       :end end
-                       :color color
-                       :border-width border-width})
-                idx)
-              :rect
-              (let [{x1 :x y1 :y} start
-                    {x2 :x y2 :y} end
-                    inv-x? (> x1 x2)
-                    inv-y? (> y1 y2)]
-                (rum/with-key
-                  (Rect {:x (if inv-x? x2 x1)
-                         :y (if inv-y? y2 y1)
-                         :rx radius
-                         :ry radius
-                         :width (if inv-x? (- x1 x2) (- x2 x1))
-                         :height (if inv-y? (- y1 y2) (- y2 y1))
-                         :color color
-                         :border-width border-width
-                         :fill fill})
-                  idx))
-              :oval
-              (let [{x1 :x y1 :y} start
-                    {x2 :x y2 :y} end
-                    inv-x? (> x1 x2)
-                    inv-y? (> y1 y2)
-                    rx (if inv-x? (- x1 x2) (- x2 x1))
-                    ry (if inv-y? (- y1 y2) (- y2 y1))]
-                (rum/with-key
-                  (Oval {:cx ((if inv-x? - +) x1 (/ rx 2))
-                         :cy ((if inv-y? - +) y1 (/ ry 2))
-                         :rx (/ rx 2)
-                         :ry (/ ry 2)
-                         :color color
-                         :border-width border-width
-                         :fill fill})
-                  idx))))
+          #(render-shapes %2 %1)
           shapes)
          (when (and start (or end drag-end))
-           (case tool
-            :line
-            (Line {:start start
-                   :end (or end drag-end)
-                   :color border-color
-                   :border-width border-width})
-            :rect
-            (let [{x1 :x y1 :y} start
-                  {x2 :x y2 :y} (or end drag-end)
-                  inv-x? (> x1 x2)
-                  inv-y? (> y1 y2)]
-              (Rect {:x (if inv-x? x2 x1)
-                     :y (if inv-y? y2 y1)
-                     :rx radius
-                     :ry radius
-                     :width (if inv-x? (- x1 x2) (- x2 x1))
-                     :height (if inv-y? (- y1 y2) (- y2 y1))
-                     :color border-color
-                     :border-width border-width
-                     :fill fill}))
-            :oval
-            (let [{x1 :x y1 :y} start
-                  {x2 :x y2 :y} (or end drag-end)
-                  inv-x? (> x1 x2)
-                  inv-y? (> y1 y2)
-                  rx (if inv-x? (- x1 x2) (- x2 x1))
-                  ry (if inv-y? (- y1 y2) (- y2 y1))]
-              (Oval {:cx ((if inv-x? - +) x1 (/ rx 2))
-                     :cy ((if inv-y? - +) y1 (/ ry 2))
-                     :rx (/ rx 2)
-                     :ry (/ ry 2)
-                     :color border-color
-                     :border-width border-width
-                     :fill fill}))
-            nil))])
+           (render-active-shape
+             (assoc attrs :end (or end drag-end))
+             tool))])
       (AttrsEditor
-       #(swap! state assoc %1 %2)
-       {:radius radius
-        :fill fill
-        :border-color border-color
-        :border-width border-width})]]))
+       #(swap! state assoc-in [:attrs %1] %2)
+       (dissoc attrs :start :end))]]))
