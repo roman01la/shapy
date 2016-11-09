@@ -57,7 +57,11 @@
            (swap! state merge {:x (normalize-value w r cx)
                                :y (normalize-value w r cy)})
            (when on-mouse-move (on-mouse-move {:x (normalize-value w 0 x)
-                                               :y (normalize-value w 0 y)}))))}
+                                               :y (normalize-value w 0 y)}))))
+       :on-click #(when on-click
+                    (let [[x y] (normalize-pos cst "canvas" (.. % -clientX) (.. % -clientY))]
+                      (on-click {:x (normalize-value w 0 x)
+                                 :y (normalize-value w 0 y)})))}
       [:defs
        [:pattern
         {:id "small-grid"
@@ -86,16 +90,4 @@
          {:d "M 100 0 L 0 0 0 100"}]]]
       [:rect {:style grid-styles
               :fill "url(#grid)"}]
-      child]
-     [:div {:style {:position "absolute"
-                    :left x
-                    :top y
-                    :width (* r 2)
-                    :height (* r 2)
-                    :border-radius r
-                    :background "#158eec"
-                    :box-shadow "0 0 20px rgb(21, 142, 236)"}
-            :on-click #(when on-click
-                         (let [[x y] (normalize-pos cst "canvas" (.. % -clientX) (.. % -clientY))]
-                           (on-click {:x (normalize-value w 0 x)
-                                      :y (normalize-value w 0 y)})))}]]))
+      child]]))

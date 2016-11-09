@@ -41,6 +41,8 @@
       divider
       (map
        (fn [[key Icon]]
-         (Icon {:on-click #(on-select key)
-                :active? (= selected key)}))
+         (rum/with-key
+           (Icon {:on-click #(on-select key)
+                  :active? (= selected key)})
+           key))
        shape-icons))]]])
