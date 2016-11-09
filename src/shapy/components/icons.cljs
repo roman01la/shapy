@@ -2,32 +2,75 @@
   (:require [rum.core :as rum]))
 
 (defn icon-container-styles [active?]
-  {:width 26
-   :height 26
-   :position "relative"
-   :background (if active? "#ccc" "#eee")})
+  {:width 28
+   :height 28
+   :padding 1
+   :box-sizing "border-box"
+   :background (if active? "#eee" "transparent")
+   :border (if active? "1px solid #ccc" "1px solid transparent")})
 
-(def line-icon-styles
-  {:width 24
-   :height 2
-   :position "absolute"
-   :background "#158eec"
-   :transform-origin "50% 50%"
-   :transform "rotate(-45deg) translate3d(-9px, 8px, 0)"})
+(def stroke-color "#16909C")
 
-(def rect-icon-styles
-  {:width 14
-   :height 14
-   :margin 4
-   :position "absolute"
-   :border "2px solid #158eec"})
+(rum/defc LinearGradient
+  [{:keys [id x1 y1 x2 y2 color-stops]}]
+  [:linearGradient
+   {:id id
+    :x1 x1
+    :y1 y1
+    :x2 x2
+    :y2 y2}
+   (map-indexed
+    (fn [idx {:keys [color offset]}]
+      [:stop {:key (str color idx)
+              :stop-color color
+              :offset offset}])
+    color-stops)])
+
+(defn icon-gradient [id]
+  (rum/with-key
+    (LinearGradient {:id id
+                     :x1 "50%"
+                     :y1 "0%"
+                     :x2 "50%"
+                     :y2 "100%"
+                     :color-stops [{:color "#31E3F5"
+                                    :offset "0%"}
+                                   {:color "#2FD3E4"
+                                    :offset "100%"}]})
+    id))
+
+(rum/defc Icon [{:keys [on-click active?]} shape & defs]
+  [:div {:style (icon-container-styles active?)
+         :on-click on-click}
+    [:svg {:width 24
+           :height 24
+           :viewBox "0 0 24 24"}
+     [:defs defs]
+     shape]])
 
 (rum/defc LineIcon [{:keys [on-click active?]}]
-  [:div {:style (icon-container-styles active?)
-         :on-click on-click}
-   [:div {:style line-icon-styles}]])
+  (Icon
+    {:on-click on-click
+     :active? active?}
+    [:rect {:x1 0
+            :y1 0
+            :width 4
+            :height 24
+            :stroke stroke-color
+            :stroke-width 0.5
+            :fill "url(#icon-lg)"
+            :transform "translate(19, 2) rotate(-315)"}]
+    (icon-gradient "icon-lg")))
 
 (rum/defc RectIcon [{:keys [on-click active?]}]
-  [:div {:style (icon-container-styles active?)
-         :on-click on-click}
-   [:div {:style rect-icon-styles}]])
+  (Icon
+    {:on-click on-click
+     :active? active?}
+    [:rect {:x1 0
+            :y1 0
+            :width 24
+            :height 24
+            :stroke stroke-color
+            :stroke-width 1
+            :fill "url(#icon-lg)"}]
+    (icon-gradient "icon-lg")))
