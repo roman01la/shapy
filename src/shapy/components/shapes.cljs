@@ -55,13 +55,14 @@
   [{state ::state}
    render-shape
    props
-   on-select]
+   on-select
+   can-hover?]
   (let [{:keys [hovered?]} @state]
-    [:g {:on-mouse-over #(swap! state assoc :hovered? true)
-         :on-mouse-out #(swap! state assoc :hovered? false)
+    [:g {:on-mouse-over (when can-hover? #(swap! state assoc :hovered? true))
+         :on-mouse-out (when can-hover? #(swap! state assoc :hovered? false))
          :on-click (when on-select #(on-select))}
      (render-shape props)
-     (when hovered?
+     (when (and hovered? can-hover?)
        (render-shape (-> props
                          (merge {:border-color "#4bc1fc"
                                  :border-width 1.5

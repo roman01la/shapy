@@ -115,11 +115,12 @@
    :oval (render-oval props)
    nil))
 
-(defn render-shapes [on-select props idx]
+(defn render-shapes
+  [{:keys [on-select can-hover? props idx]}]
   (case (:type props)
-    :line (rum/with-key (InteractiveShape render-line props on-select) idx)
-    :rect (rum/with-key (InteractiveShape render-rect props on-select) idx)
-    :oval (rum/with-key (InteractiveShape render-oval props on-select) idx)))
+    :line (rum/with-key (InteractiveShape render-line props on-select can-hover?) idx)
+    :rect (rum/with-key (InteractiveShape render-rect props on-select can-hover?) idx)
+    :oval (rum/with-key (InteractiveShape render-oval props on-select can-hover?) idx)))
 
 (defn update-state
   [shape
@@ -199,8 +200,10 @@
          (map-indexed
           (fn [idx props]
             (render-shapes
-             #(swap! state assoc :selected (nth shapes idx))
-             props idx))
+             {:on-select #(swap! state assoc :selected (nth shapes idx))
+              :can-hover? (nil? tool)
+              :props props
+              :idx idx}))
           shapes)
          (when (and start (or end drag-end))
            (render-active-shape
