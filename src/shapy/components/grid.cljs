@@ -17,12 +17,11 @@
    :height "100vh"
    :flex 1})
 
-(defn normalize-value [w r val]
+(defn normalize-value [w val]
   (-> val
       (/ w)
       js/Math.round
-      (* w)
-      (- r)))
+      (* w)))
 
 (defn normalize-pos [cst ref cx cy]
   (let [rect (-> cst (rum/ref-node ref) (.getBoundingClientRect))
@@ -34,34 +33,28 @@
 (rum/defcs SnappyGrid <
   rum/static
   (rum/local
-   {:x 0
-    :y 0
-    :w 10
-    :h 10
-    :r 6}
+   {:w 4
+    :h 4}
    ::state)
   [{state ::state :as cst}
    {:keys [on-click
            on-mouse-move]}
    child]
-  (let [{:keys [x y w h r]} @state]
+  (let [{:keys [w h]} @state]
     [:div.canvas {:style container-styles}
      [:svg
       {:style canvas-styles
        :ref "canvas"
        :on-mouse-move
-       #(do
-         (let [cx (.. % -clientX)
-               cy (.. % -clientY)
-               [x y] (normalize-pos cst "canvas" cx cy)]
-           (swap! state merge {:x (normalize-value w r cx)
-                               :y (normalize-value w r cy)})
-           (when on-mouse-move (on-mouse-move {:x (normalize-value w 0 x)
-                                               :y (normalize-value w 0 y)}))))
-       :on-click #(when on-click
-                    (let [[x y] (normalize-pos cst "canvas" (.. % -clientX) (.. % -clientY))]
-                      (on-click {:x (normalize-value w 0 x)
-                                 :y (normalize-value w 0 y)})))}
+       (when on-mouse-move
+        #(let [[x y] (normalize-pos cst "canvas" (.. % -clientX) (.. % -clientY))]
+          (on-mouse-move {:x (normalize-value w x)
+                          :y (normalize-value w y)})))
+       :on-click
+       (when on-click
+        #(let [[x y] (normalize-pos cst "canvas" (.. % -clientX) (.. % -clientY))]
+          (on-click {:x (normalize-value w x)
+                     :y (normalize-value w y)})))}
       [:defs
        [:pattern
         {:id "small-grid"
