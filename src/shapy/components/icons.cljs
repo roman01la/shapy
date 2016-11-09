@@ -74,3 +74,15 @@
             :stroke-width 1
             :fill "url(#icon-lg)"}]
     (icon-gradient "icon-lg")))
+
+(rum/defc OvalIcon [{:keys [on-click active?]}]
+  (Icon
+    {:on-click on-click
+     :active? active?}
+    [:circle {:cx 12
+              :cy 12
+              :r 11.5
+              :stroke stroke-color
+              :stroke-width 0.5
+              :fill "url(#icon-lg)"}]
+    (icon-gradient "icon-lg")))
