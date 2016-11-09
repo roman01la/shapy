@@ -53,7 +53,9 @@
 
 (defn handle-esc [st {:keys [key-code]}]
   (when (and (= key-code 27) (:tool @st))
-    (swap! st assoc :tool nil)))
+    (swap! st #(-> %
+                (assoc :tool nil)
+                (assoc :selected nil)))))
 
 (def container-styles
   {:display "flex"
@@ -116,11 +118,11 @@
    nil))
 
 (defn render-shapes
-  [{:keys [on-select can-hover? props idx]}]
+  [{:keys [on-select can-interact? props idx]}]
   (case (:type props)
-    :line (rum/with-key (InteractiveShape render-line props on-select can-hover?) idx)
-    :rect (rum/with-key (InteractiveShape render-rect props on-select can-hover?) idx)
-    :oval (rum/with-key (InteractiveShape render-oval props on-select can-hover?) idx)))
+    :line (rum/with-key (InteractiveShape render-line props on-select can-interact?) idx)
+    :rect (rum/with-key (InteractiveShape render-rect props on-select can-interact?) idx)
+    :oval (rum/with-key (InteractiveShape render-oval props on-select can-interact?) idx)))
 
 (defn update-state
   [shape
@@ -174,6 +176,7 @@
   [{state ::state}]
   (let [{:keys [drag-end
                 shapes
+                selected
                 tool
                 attrs]}
         @state
@@ -200,8 +203,10 @@
          (map-indexed
           (fn [idx props]
             (render-shapes
-             {:on-select #(swap! state assoc :selected (nth shapes idx))
-              :can-hover? (nil? tool)
+             {:on-select
+              #(swap! state merge {:attrs (nth shapes idx)
+                                   :selected idx})
+              :can-interact? (nil? tool)
               :props props
               :idx idx}))
           shapes)
@@ -210,5 +215,10 @@
              (assoc attrs :end (or end drag-end))
              tool))])
       (AttrsEditor
-       #(swap! state assoc-in [:attrs %1] %2)
+       (fn [attr val]
+        (swap! state #(if selected
+                        (-> %
+                          (assoc-in [:shapes selected attr] val)
+                          (assoc-in [:attrs attr] val))
+                        (assoc-in % [:attrs attr] val))))
        (dissoc attrs :start :end))]]))
