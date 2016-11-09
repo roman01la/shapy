@@ -4,13 +4,14 @@
 (rum/defc Line
   [{:keys [start
            end
-           color]}]
+           color
+           border-width]}]
   [:line {:x1 (:x start)
           :y1 (:y start)
           :x2 (:x end)
           :y2 (:y end)
           :stroke color
-          :stroke-width 4}])
+          :stroke-width border-width}])
 
 (rum/defc Rect
   [{:keys [x
@@ -18,13 +19,14 @@
            width
            height
            color
-           fill]}]
+           fill
+           border-width]}]
   [:rect {:x x
           :y y
           :width width
           :height height
           :stroke color
-          :stroke-width 4
+          :stroke-width border-width
           :fill fill}])
 
 (rum/defc Oval
@@ -33,11 +35,12 @@
            rx
            ry
            color
-           fill]}]
+           fill
+           border-width]}]
   [:ellipse {:cx cx
              :cy cy
              :rx rx
              :ry ry
              :stroke color
-             :stroke-width 4
+             :stroke-width border-width
              :fill fill}])

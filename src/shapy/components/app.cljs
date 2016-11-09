@@ -48,8 +48,6 @@
 (def inner-container-styles
   {:display "flex"})
 
-(def stroke-color "#158eec")
-
 (rum/defcs App <
   undo-redo-mixin
   (rum/local
@@ -57,11 +55,21 @@
     :end nil
     :drag-end nil
     :fill "#000000"
+    :border-color "#158eec"
+    :border-width 4
     :shapes []
     :tool nil}
    ::state)
   [{state ::state}]
-  (let [{:keys [start end drag-end fill shapes tool]} @state]
+  (let [{:keys [start
+                end
+                drag-end
+                fill
+                border-color
+                border-width
+                shapes
+                tool]}
+        @state]
     [:div {:style container-styles}
      (Toolbar {:on-select #(swap! state assoc :tool %)
                    :selected tool})
@@ -81,7 +89,9 @@
                                                      (update :shapes conj {:start start
                                                                            :end %
                                                                            :type tool
-                                                                           :fill fill})
+                                                                           :fill fill
+                                                                           :color border-color
+                                                                           :border-width border-width})
                                                      (assoc :start nil)
                                                      (assoc :end nil))]
                                          (update-history history st nst)
@@ -97,13 +107,19 @@
 
         [:g
          (map-indexed
-          (fn [idx {:keys [start end type fill]}]
+          (fn [idx {:keys [start
+                           end
+                           type
+                           fill
+                           color
+                           border-width]}]
             (case type
               :line
               (rum/with-key
                 (Line {:start start
                        :end end
-                       :color stroke-color})
+                       :color color
+                       :border-width border-width})
                 idx)
               :rect
               (let [{x1 :x y1 :y} start
@@ -115,7 +131,8 @@
                          :y (if inv-y? y2 y1)
                          :width (if inv-x? (- x1 x2) (- x2 x1))
                          :height (if inv-y? (- y1 y2) (- y2 y1))
-                         :color stroke-color
+                         :color color
+                         :border-width border-width
                          :fill fill})
                   idx))
               :oval
@@ -130,7 +147,8 @@
                          :cy (+ y1 (/ ry 2))
                          :rx (/ rx 2)
                          :ry (/ ry 2)
-                         :color stroke-color
+                         :color color
+                         :border-width border-width
                          :fill fill})
                   idx))))
           shapes)
@@ -139,7 +157,8 @@
             :line
             (Line {:start start
                    :end (or end drag-end)
-                   :color stroke-color})
+                   :color border-color
+                   :border-width border-width})
             :rect
             (let [{x1 :x y1 :y} start
                   {x2 :x y2 :y} (or end drag-end)
@@ -149,7 +168,8 @@
                      :y (if inv-y? y2 y1)
                      :width (if inv-x? (- x1 x2) (- x2 x1))
                      :height (if inv-y? (- y1 y2) (- y2 y1))
-                     :color stroke-color
+                     :color border-color
+                     :border-width border-width
                      :fill fill}))
             :oval
             (let [{x1 :x y1 :y} start
@@ -162,9 +182,12 @@
                      :cy (+ y1 (/ ry 2))
                      :rx (/ rx 2)
                      :ry (/ ry 2)
-                     :color stroke-color
+                     :color border-color
+                     :border-width border-width
                      :fill fill}))
             nil))])
       (AttrsEditor
        #(swap! state assoc %1 %2)
-       {:fill fill})]]))
+       {:fill fill
+        :border-color border-color
+        :border-width border-width})]]))

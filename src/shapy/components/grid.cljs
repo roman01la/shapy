@@ -13,7 +13,7 @@
    :display "flex"})
 
 (def grid-styles
-  {:width "calc(100vw - 240px)"
+  {:width "calc(100vw - 200px)"
    :height "100vh"
    :flex 1})
 
