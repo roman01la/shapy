@@ -37,7 +37,8 @@
   [{:keys [value on-change]}]
   [:input {:type "color"
            :style {:background "transparent"
-                   :border "none"}
+                   :border "none"
+                   :height 26}
            :value value
            :on-change #(-> % event->value on-change)}])
 
@@ -48,9 +49,10 @@
            max]}]
   [:input {:type "number"
            :style {:margin 0
-                   :padding 0
-                   :width 32
-                   :height 16}
+                   :padding "0 4px"
+                   :width 24
+                   :height 16
+                   :border "1px solid #777777"}
            :value value
            :min min
            :max max
