@@ -190,12 +190,9 @@
        (SnappyGrid
         {:on-mouse-move #(swap! state assoc :drag-end %)
          :on-click
-         #(swap!
-           state
-           (fn [st]
-             (if tool
-               (update-state attrs tool % history st)
-               st)))}
+         (when tool
+           (fn [pos]
+             (swap! state #(update-state attrs tool pos history %))))}
         [:g
          (map-indexed
           (fn [idx props]
