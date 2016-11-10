@@ -189,16 +189,13 @@
             :class (when tool "canvas__tool")}
        (SnappyGrid
         {:on-mouse-move #(swap! state assoc :drag-end %)
-         :on-click #(swap! state (fn [st]
-                                   (if tool
-                                     (update-state
-                                       attrs
-                                       tool
-                                       %
-                                       history
-                                       st)
-                                     st)))}
-
+         :on-click
+         #(swap!
+           state
+           (fn [st]
+             (if tool
+               (update-state attrs tool % history st)
+               st)))}
         [:g
          (map-indexed
           (fn [idx props]
