@@ -53,13 +53,9 @@
 
 (defn handle-esc [st {:keys [key-code]}]
   (if (= key-code 27)
-    (cond
-      (:tool @st)
-      (swap! st #(-> %
-                  (assoc :tool nil)
-                  (assoc :selected nil)))
-
-      :else (swap! st assoc :selected nil))
+    (swap! st #(-> %
+                (assoc :tool nil)
+                (assoc :selected nil)))
     st))
 
 (def container-styles
