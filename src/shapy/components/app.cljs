@@ -1,5 +1,6 @@
 (ns shapy.components.app
   (:require [rum.core :as rum]
+            [clojure.data :refer [diff]]
             [shapy.components.grid :refer [SnappyGrid]]
             [shapy.components.toolbar :refer [Toolbar]]
             [shapy.components.attrs-editor :refer [AttrsEditor]]
@@ -9,8 +10,8 @@
 
 (defn update-history [history st nst]
   (let [h @history
-        st- (dissoc st :drag-end)
-        nst- (dissoc nst :drag-end)
+        st- (dissoc st :mouse)
+        nst- (dissoc nst :mouse)
         idx (.indexOf h st-)]
     (if (= idx -1)
       (swap! history conj nst-)
@@ -29,6 +30,14 @@
 
      state)})
 
+(def logger-mixin
+  {:did-mount
+   (fn [{st ::state :as state}]
+     (add-watch st :log (fn [k r o n]
+                          (let [[a] (diff n o)]
+                            (console.log a))))
+     state)})
+
 (defn handle-undo-redo
   [st
    {:keys [key-code
@@ -39,17 +48,17 @@
          (true? ctrl-key))
     (let [h @history
           s @st
-          idx (dec (.indexOf h (dissoc s :drag-end)))]
+          idx (dec (.indexOf h (dissoc s :mouse)))]
       (when (>= idx 0)
-        (reset! st (assoc (nth h idx) :drag-end (:drag-end s)))))
+        (reset! st (assoc (nth h idx) :mouse (:mouse s)))))
     ;; redo
     (and (= key-code 89)
          (true? ctrl-key))
     (let [h @history
           s @st
-          idx (inc (.indexOf h (dissoc s :drag-end)))]
+          idx (inc (.indexOf h (dissoc s :mouse)))]
       (when (< idx (count h))
-        (reset! st (assoc (nth h idx) :drag-end (:drag-end s)))))))
+        (reset! st (assoc (nth h idx) :mouse (:mouse s)))))))
 
 (defn handle-esc [st {:keys [key-code]}]
   (if (= key-code 27)
@@ -125,17 +134,20 @@
     :oval (rum/with-key (InteractiveShape render-oval props) (:idx props))))
 
 (defn update-state
-  [shape
+  [st
+   shape
    tool
    pos
-   history
-   st]
+   history]
   (let [{:keys [start end]} (:attrs st)]
     (cond
       (and (nil? start) (nil? end))
       (let [nst (assoc-in st [:attrs :start] pos)]
         (update-history history st nst)
         nst)
+
+      (= start pos)
+      (assoc-in st [:attrs :start] nil)
 
       (and start (nil? end))
       (let [nst (-> st
@@ -144,16 +156,11 @@
                     (assoc-in [:attrs :start] nil)
                     (assoc-in [:attrs :end] nil))]
         (update-history history st nst)
-        nst)
-
-      (and start end)
-      (let [nst (-> st
-                    (assoc-in [:attrs :start] nil)
-                    (assoc-in [:attrs :end] nil))]
-        (update-history history st nst)
+        (console.log nst)
         nst))))
 
 (rum/defcs App <
+  logger-mixin
   (keyboard-mixin
    handle-undo-redo
    handle-esc)
@@ -162,10 +169,11 @@
      (update-history history @st @st)
      state)}
   (rum/local
-   {:drag-end nil
+   {:mouse nil
     :shapes []
     :selected nil
     :tool nil
+    :press? false
     :attrs {:start nil
             :end nil
             :radius 0
@@ -174,10 +182,11 @@
             :border-width 2}}
    ::state)
   [{state ::state}]
-  (let [{:keys [drag-end
+  (let [{:keys [mouse
                 shapes
                 selected
                 tool
+                press?
                 attrs]}
         @state
         {:keys [start end]} attrs]
@@ -188,11 +197,19 @@
      [:div {:style canvas-container-styles
             :class (when tool "canvas__tool")}
        (SnappyGrid
-        {:on-mouse-move #(swap! state assoc :drag-end %)
-         :on-click
+        {:on-mouse-move #(swap! state assoc :mouse %)
+         :on-mouse-up
          (when tool
            (fn [pos]
-             (swap! state #(update-state attrs tool pos history %))))}
+            (swap! state #(-> %
+                           (update-state attrs tool pos history)
+                           (assoc :press? false)))))
+         :on-mouse-down
+         (when tool
+           (fn [pos]
+             (swap! state #(-> %
+                               (update-state attrs tool pos history)
+                               (assoc :press? true)))))}
         [:g
          (map-indexed
           (fn [idx props]
@@ -205,9 +222,9 @@
               :props props
               :idx idx}))
           shapes)
-         (when (and start (or end drag-end))
+         (when (and start (or end mouse))
            (render-active-shape
-             (assoc attrs :end (or end drag-end))
+             (assoc attrs :end (or end mouse))
              tool))])
       (AttrsEditor
        (fn [attr val]

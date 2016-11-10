@@ -25,6 +25,11 @@
     [(- cx left)
      (- cy top)]))
 
+(defn pos->handler [cst w handler e]
+  (let [[x y] (normalize-pos cst "canvas" (.. e -clientX) (.. e -clientY))]
+    (handler {:x (normalize-value w x)
+              :y (normalize-value w y)})))
+
 (rum/defcs SnappyGrid <
   rum/static
   (rum/local
@@ -33,22 +38,26 @@
    ::state)
   [{state ::state :as cst}
    {:keys [on-click
+           on-mouse-down
+           on-mouse-up
            on-mouse-move]}
    child]
   (let [{:keys [w h]} @state]
    [:svg
     {:style canvas-styles
      :ref "canvas"
+     :on-mouse-down
+     (when on-mouse-down
+      #(pos->handler cst w on-mouse-down %))
+     :on-mouse-up
+     (when on-mouse-up
+      #(pos->handler cst w on-mouse-up %))
      :on-mouse-move
      (when on-mouse-move
-      #(let [[x y] (normalize-pos cst "canvas" (.. % -clientX) (.. % -clientY))]
-        (on-mouse-move {:x (normalize-value w x)
-                        :y (normalize-value w y)})))
+      #(pos->handler cst w on-mouse-move %))
      :on-click
      (when on-click
-      #(let [[x y] (normalize-pos cst "canvas" (.. % -clientX) (.. % -clientY))]
-        (on-click {:x (normalize-value w x)
-                   :y (normalize-value w y)})))}
+      #(pos->handler cst w on-click %))}
     [:defs
      [:pattern
       {:id "small-grid"
