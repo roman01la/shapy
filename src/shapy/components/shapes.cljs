@@ -54,16 +54,20 @@
   (rum/local {:hovered? false} ::state)
   [{state ::state}
    render-shape
-   props
-   on-select
-   can-interact?]
+   {:keys [props
+           on-select
+           can-interact?
+           selected?]}]
   (let [{:keys [hovered?]} @state]
     [:g {:on-mouse-over (when can-interact? #(swap! state assoc :hovered? true))
          :on-mouse-out (when can-interact? #(swap! state assoc :hovered? false))
          :on-click (when (and on-select can-interact?) #(on-select))}
      (render-shape props)
+     (when selected?
+       (render-shape (merge props {:border-color "#cccccc"
+                                   :border-width 0.5
+                                   :fill "none"})))
      (when (and hovered? can-interact?)
-       (render-shape (-> props
-                         (merge {:border-color "#4bc1fc"
-                                 :border-width 1.5
-                                 :fill "none"}))))]))
+       (render-shape (merge props {:border-color "#4bc1fc"
+                                   :border-width 1.5
+                                   :fill "none"})))]))

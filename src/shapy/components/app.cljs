@@ -52,10 +52,15 @@
         (reset! st (assoc (nth h idx) :drag-end (:drag-end s)))))))
 
 (defn handle-esc [st {:keys [key-code]}]
-  (when (and (= key-code 27) (:tool @st))
-    (swap! st #(-> %
-                (assoc :tool nil)
-                (assoc :selected nil)))))
+  (if (= key-code 27)
+    (cond
+      (:tool @st)
+      (swap! st #(-> %
+                  (assoc :tool nil)
+                  (assoc :selected nil)))
+
+      :else (swap! st assoc :selected nil))
+    st))
 
 (def container-styles
   {:display "flex"
@@ -117,12 +122,11 @@
    :oval (render-oval props)
    nil))
 
-(defn render-shapes
-  [{:keys [on-select can-interact? props idx]}]
-  (case (:type props)
-    :line (rum/with-key (InteractiveShape render-line props on-select can-interact?) idx)
-    :rect (rum/with-key (InteractiveShape render-rect props on-select can-interact?) idx)
-    :oval (rum/with-key (InteractiveShape render-oval props on-select can-interact?) idx)))
+(defn render-shapes [props]
+  (case (get-in props [:props :type])
+    :line (rum/with-key (InteractiveShape render-line props) (:idx props))
+    :rect (rum/with-key (InteractiveShape render-rect props) (:idx props))
+    :oval (rum/with-key (InteractiveShape render-oval props) (:idx props))))
 
 (defn update-state
   [shape
@@ -207,6 +211,7 @@
               #(swap! state merge {:attrs (nth shapes idx)
                                    :selected idx})
               :can-interact? (nil? tool)
+              :selected? (= idx selected)
               :props props
               :idx idx}))
           shapes)
